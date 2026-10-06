@@ -1,0 +1,146 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>G&K House</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F7EEDB;--card:#FFFAF0;--ink:#25150D;--mut:#8D7B69;--gold:#C99A42;--side:#25150D;--ok:#536B42;--warn:#C98A1A;--bad:#A54837;--line:#e6d9bd;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#1b100a;--card:#2a1a11;--ink:#F7EEDB;--mut:#b4a28d;--line:#4a3426;--side:#120a06}}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px Inter,system-ui,sans-serif}
+h1,h2,h3,.serif{font-family:'Playfair Display',Georgia,serif}
+#app{display:flex;min-height:100vh}
+nav{width:200px;background:var(--side);color:#F7EEDB;padding:18px 10px;position:sticky;top:0;height:100vh;flex-shrink:0}
+nav .logo{font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);padding:0 10px 2px}nav small{display:block;padding:0 10px 16px;color:#b9a88f;font-size:11px;font-style:italic}
+nav a{display:block;padding:9px 10px;border-radius:8px;cursor:pointer;color:#e9dcc2}nav a.on{background:#3A2115;color:var(--gold)}
+main{flex:1;padding:20px;max-width:1100px;min-width:0;padding-bottom:90px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+h1{margin:0;font-size:26px}.sub{color:var(--mut);margin:0 0 14px}
+.demo{background:var(--gold);color:#25150D;font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 1px 3px #0001}
+.k{color:var(--mut);font-size:12px}.v{font:700 22px 'Playfair Display',serif;margin-top:2px}.s{font-size:12px;color:var(--mut)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+table{width:100%;border-collapse:collapse}th{position:sticky;top:0;background:var(--card);text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
+td,th{padding:8px 6px;border-bottom:1px solid var(--line)}.wrap{overflow-x:auto;max-width:100%}
+.pill{padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;color:#fff;background:var(--ok)}.pill.low{background:var(--warn)}.pill.bad{background:var(--bad)}
+button,select,input{font:inherit;color:var(--ink)}
+.btn{background:var(--gold);border:0;border-radius:10px;padding:8px 14px;font-weight:600;cursor:pointer;color:#25150D}.btn.g{background:transparent;border:1px solid var(--line)}
+input,select{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);margin:3px 0 10px}
+label{font-size:12px;color:var(--mut)}
+#fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--gold);color:#25150D;border:0;border-radius:99px;padding:14px 20px;font-weight:700;box-shadow:0 4px 14px #0004;cursor:pointer;z-index:5}
+#modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:9;padding:16px}
+#modal .card{width:min(420px,100%);max-height:90vh;overflow:auto}
+.chips{display:grid;grid-template-columns:1fr 1fr;gap:8px}.chips button{padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);cursor:pointer}
+.bars{display:flex;align-items:flex-end;gap:8px;height:120px}.bars div{flex:1;text-align:center;font-size:10px;color:var(--mut)}.bars i{display:block;background:var(--gold);border-radius:4px 4px 0 0;min-height:2px}
+.pulse p{margin:6px 0}.empty{color:var(--mut);font-style:italic;padding:10px}
+#bn{display:none}
+@media(max-width:760px){nav{display:none}.cols{grid-template-columns:1fr}main{padding:14px 12px 100px}
+#bn{display:flex;position:fixed;left:0;right:0;bottom:0;background:var(--side);padding:8px 4px calc(8px + env(safe-area-inset-bottom,0px));z-index:4}
+#bn a{flex:1;text-align:center;color:#e9dcc2;font-size:12px;padding:8px 0;cursor:pointer}#bn a.on{color:var(--gold)}#fab{bottom:calc(70px + env(safe-area-inset-bottom,0px))}}
+</style></head><body>
+<div id="app"><nav id="nav"></nav><main id="main"></main></div>
+<div id="bn"></div><button id="fab" onclick="menu()">+ LIVE UPDATE</button><div id="modal" onclick="if(event.target==this)closeM()"><div class="card" id="mb"></div></div>
+<script>
+const KEY='gkhouse_v1',$=s=>document.querySelector(s),R=n=>'₹'+Math.round(n).toLocaleString('en-IN'),uid=()=>Math.random().toString(36).slice(2,9);
+let S,view='house',range='7d';
+function seed(){
+ S={mat:[],prod:[],rec:{},led:[],sales:[],sellers:[],exp:[],waste:[],pay:[],batches:[],log:[],seq:{}};
+ [['mascarpone','Mascarpone','kg',900,5],['cream','Cream','kg',300,6],['coffee','Coffee','kg',1200,1],['sugar','Sugar','kg',50,3],['biscuit','Biscuit','kg',250,2],['cocoa','Cocoa','kg',600,1],['spread','Biscoff spread','kg',1500,1],['choc','Dark chocolate','kg',700,1],['straw','Strawberry puree','kg',400,1],['mango','Mango pulp','kg',350,1],['cont','Container','pc',12,100],['stick','Sticker','pc',2,100],['spoon','Spoon','pc',1,100]].forEach(m=>S.mat.push({id:m[0],name:m[1],unit:m[2],cost:m[3],reorder:m[4]}));
+ const base=[['mascarpone',.058],['cream',.062],['coffee',.011],['sugar',.02],['biscuit',.03],['cocoa',.005],['cont',1],['stick',1],['spoon',1]];
+ [['classic','TIR-CLS','Classic Tiramisu',250,null],['biscoff','TIR-BIS','Biscoff Tiramisu',279,['spread',.03]],['choc','TIR-CHO','Chocolate Tiramisu',269,['choc',.04]],['straw','TIR-STR','Strawberry Tiramisu',279,['straw',.04]],['mango','TIR-MAN','Mango Tiramisu',279,['mango',.04]]].forEach(p=>{
+  S.prod.push({id:p[0],sku:p[1],name:p[2],price:p[3],sp:Math.round(p[3]*.8),direct:40,fg:0});S.rec[p[0]]=base.map(x=>({m:x[0],q:x[1]})).concat(p[4]?[{m:p[4][0],q:p[4][1]}]:[])});
+ S.sellers=[{id:'amc',name:'AMC Bannerghatta',loc:'Bannerghatta Rd',comm:.2},{id:'cafe',name:'Brew Lane Café',loc:'Indiranagar',comm:.25}];
+ S.mat.forEach(m=>L('PURCHASE',m.id,'raw','kitchen',m.unit=='pc'?600:60,m.cost,'seed',-6));
+ prodRun('classic',100,4,true);prodRun('biscoff',40,0,true);
+ sellRun('delivery','amc','classic',30,true);sellRun('sale','amc','classic',18,true);
+ doSale({customer:'Walk-in',channel:'Direct',p:'classic',q:6,paid:'Paid'},true);doSale({customer:'Anita',channel:'WhatsApp',p:'biscoff',q:3,paid:'Paid'},true);
+ S.exp.push({id:uid(),ts:Date.now(),cat:'Marketing',desc:'Instagram ads',amt:1500});
+ S.demo=true;save()}
+function load(){try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}if(!S)seed()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function A(t){S.log.unshift({ts:Date.now(),t});S.log=S.log.slice(0,60)}
+function L(type,item,kind,loc,qty,cost,ref,dayOff=0){S.led.push({id:uid(),ts:Date.now()+dayOff*864e5,type,item,kind,loc,qty,cost,ref})}
+const stock=(item,loc='kitchen')=>+S.led.filter(l=>l.item==item&&l.loc==loc).reduce((a,l)=>a+l.qty,0).toFixed(3);
+const P=id=>S.prod.find(p=>p.id==id),M=id=>S.mat.find(m=>m.id==id),SL=id=>S.sellers.find(s=>s.id==id);
+const bomCost=pid=>S.rec[pid].reduce((a,r)=>a+r.q*M(r.m).cost,0),unitCost=pid=>bomCost(pid)+P(pid).direct;
+function need(pid,q){return S.rec[pid].map(r=>({m:M(r.m),req:+(r.q*q).toFixed(3),av:stock(r.m)}))}
+function prodRun(pid,q,rej,silent){
+ const n=need(pid,q);if(n.some(x=>x.av<x.req))return 'Shortage: '+n.filter(x=>x.av<x.req).map(x=>x.m.name).join(', ');
+ const ok=q-rej;if(ok<=0)return 'Accepted qty must be above 0';
+ const code=P(pid).sku.split('-')[1],d=new Date(),ds=String(d.getDate()).padStart(2,'0')+String(d.getMonth()+1).padStart(2,'0')+String(d.getFullYear()).slice(2),k=code+ds;
+ S.seq[k]=(S.seq[k]||0)+1;const b='GK-'+code+'-'+ds+'-'+String(S.seq[k]).padStart(3,'0');
+ let tot=0;n.forEach(x=>{L('PRODUCTION USE',x.m.id,'raw','kitchen',-x.req,x.m.cost,b);tot+=x.req*x.m.cost});tot+=q*P(pid).direct;
+ const uc=tot/ok,p=P(pid),have=stock(pid);p.fg=(have*p.fg+ok*uc)/(have+ok);
+ L('PRODUCTION OUTPUT',pid,'fg','kitchen',ok,uc,b);
+ S.batches.unshift({id:b,pid,planned:q,ok,rej,cost:tot,uc,ts:Date.now()});
+ if(rej)S.waste.push({id:uid(),ts:Date.now(),item:pid,q:rej,reason:'QC rejection',loss:rej*uc,batch:b,fgAlready:true});
+ if(!silent)A('Produced '+ok+' × '+p.name+' ('+b+')')}
+function doSale(f,silent){const p=P(f.p),q=+f.q;if(q>stock(f.p))return 'Only '+stock(f.p)+' in stock';
+ L('SALE',f.p,'fg','kitchen',-q,p.fg,'sale');
+ S.sales.push({id:'ORD-'+(1000+S.sales.length+1),ts:Date.now(),customer:f.customer||'Walk-in',channel:f.channel,p:f.p,q,total:q*p.price,cogs:q*p.fg,paid:f.paid,status:f.paid=='Paid'?'DELIVERED':'NEW'});
+ if(!silent)A('Sale '+q+' × '+p.name+' via '+f.channel)}
+function sellRun(kind,sid,pid,q,silent){q=+q;const p=P(pid),s=SL(sid);
+ if(kind=='delivery'){if(q>stock(pid))return 'Only '+stock(pid)+' in kitchen';L('SELLER TRANSFER',pid,'fg','kitchen',-q,p.fg,sid);L('SELLER TRANSFER',pid,'fg',sid,q,p.fg,sid)}
+ else{if(q>stock(pid,sid))return 'Seller holds only '+stock(pid,sid);const rev=q*p.price;L('SELLER SALE',pid,'fg',sid,-q,p.fg,sid);
+  S.sales.push({id:'SS-'+(1000+S.sales.length+1),ts:Date.now(),customer:s.name,channel:'Seller',p:pid,q,total:rev,cogs:q*p.fg,comm:rev*s.comm,seller:sid,paid:'Paid',status:'DELIVERED'})}
+ if(!silent)A((kind=='delivery'?'Delivered ':'Seller sold ')+q+' × '+p.name+' · '+s.name)}
+const range_ms={today:0,'7d':6,'30d':29,all:9999};
+function inR(ts){const d=new Date();d.setHours(0,0,0,0);return ts>=d.getTime()-range_ms[range]*864e5}
+const owed=sid=>S.sales.filter(x=>x.seller==sid).reduce((a,x)=>a+x.total-x.comm,0)-S.pay.filter(x=>x.seller==sid).reduce((a,x)=>a+x.amt,0);
+function calc(){const sa=S.sales.filter(x=>inR(x.ts)&&x.paid!='Cancelled'),rev=sa.reduce((a,x)=>a+x.total,0),cogs=sa.reduce((a,x)=>a+x.cogs,0),comm=sa.reduce((a,x)=>a+(x.comm||0),0),
+ ex=S.exp.filter(x=>inR(x.ts)).reduce((a,x)=>a+x.amt,0),w=S.waste.filter(x=>inR(x.ts)),wl=w.reduce((a,x)=>a+x.loss,0),
+ produced=S.batches.filter(b=>inR(b.ts)).reduce((a,b)=>a+b.ok+b.rej,0),wq=w.filter(x=>S.prod.some(p=>p.id==x.item)).reduce((a,x)=>a+x.q,0);
+ return{sa,rev,cogs,gp:rev-cogs,comm,ex,wl,produced,wp:produced?wq/produced*100:0,units:sa.reduce((a,x)=>a+x.q,0),net:rev-cogs-comm-ex-wl*0}}
+const pill=(t,c='')=>`<span class="pill ${c}">${t}</span>`;
+const tbl=(h,rows)=>rows.length?`<div class="wrap"><table class="t"><tr>${h.map(x=>'<th>'+x+'</th>').join('')}</tr>${rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')}</table></div>`:'<div class="empty">The kitchen is quiet… for now.</div>';
+const kpi=(k,v,s='')=>`<div class="card"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+const dt=ts=>new Date(ts).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+const status=m=>{const a=stock(m.id);return a<=0?pill('OUT','bad'):a<m.reorder?pill('LOW','low'):pill('GOOD')};
+const V={
+house(){const c=calc(),top={};c.sa.forEach(x=>top[x.p]=(top[x.p]||0)+x.q);const tp=Object.entries(top).sort((a,b)=>b[1]-a[1])[0],
+ low=S.mat.filter(m=>stock(m.id)<m.reorder),due=S.sellers.reduce((a,s)=>a+Math.max(0,owed(s.id)),0),sp={};c.sa.filter(x=>x.seller).forEach(x=>sp[x.seller]=(sp[x.seller]||0)+x.total);const bs=Object.entries(sp).sort((a,b)=>b[1]-a[1])[0];
+ const days=[...Array(7)].map((_,i)=>{const d=new Date();d.setHours(0,0,0,0);const a=d.getTime()-(6-i)*864e5;return{l:new Date(a).toLocaleDateString('en-IN',{weekday:'short'}),v:S.sales.filter(x=>x.ts>=a&&x.ts<a+864e5).reduce((q,x)=>q+x.total,0)}}),mx=Math.max(1,...days.map(d=>d.v));
+ return `<div class="top"><div><h1>Good Morning, G&amp;K ☕ <span class="demo">Demo Data</span></h1><p class="sub">Here's what's cooking in the business today.</p></div>
+ <select style="width:auto" onchange="range=this.value;go()">${Object.keys(range_ms).map(r=>`<option ${r==range?'selected':''} value="${r}">${r=='all'?'All time':r=='today'?'Today':'Last '+r}</option>`).join('')}</select></div>
+ <div class="grid">${kpi('Revenue',R(c.rev),c.sa.length+' orders')}${kpi('Units sold',c.units,'')}${kpi('Units produced',c.produced)}${kpi('Gross profit',R(c.gp),(c.rev?(c.gp/c.rev*100).toFixed(1):0)+'% margin')}${kpi('Expenses',R(c.ex),'Commission '+R(c.comm))}${kpi('Net operating',R(c.gp-c.comm-c.ex),'after commission & expenses')}${kpi('Wastage',c.wp.toFixed(1)+'%',R(c.wl)+' lost')}${kpi('Seller dues',R(due),S.sellers.length+' seller points')}${kpi('Avg order',R(c.sa.length?c.rev/c.sa.length:0))}${kpi('Low stock',low.length,'pantry items')}</div>
+ <div class="cols"><div class="card"><h3>Revenue · 7 days</h3><div class="bars">${days.map(d=>`<div><i style="height:${d.v/mx*100}px"></i>${d.l}</div>`).join('')}</div></div>
+ <div class="card pulse"><h3>House Pulse</h3><p>🔥 Selling fast: <b>${tp?P(tp[0]).name:'—'}</b></p><p>📍 Strongest seller: <b>${bs?SL(bs[0]).name:'—'}</b></p><p>⚠️ Stock warning: <b>${low.map(m=>m.name).join(', ')||'None — the pantry is happy'}</b></p><p>💳 Seller payments due: <b>${R(due)}</b></p><p>🗑 Wastage: <b>${c.wp.toFixed(1)}%</b></p></div></div>
+ <div class="cols"><div class="card"><h3>Finished stock</h3>${tbl(['Product','Kitchen','At sellers'],S.prod.map(p=>[p.name,stock(p.id),S.sellers.reduce((a,s)=>a+stock(p.id,s.id),0)]))}</div>
+ <div class="card"><h3>Recent activity</h3>${S.log.slice(0,8).map(l=>`<p class="s">${dt(l.ts)} · ${l.t}</p>`).join('')||'<div class="empty">Nothing yet.</div>'}</div></div>`},
+orders(){return `<h1>Orders &amp; Sales</h1><p class="sub">Every sale reduces finished stock.</p><input placeholder="Search…" oninput="flt(this.value)"><div class="card">${tbl(['Order','Date','Customer','Channel','Product','Qty','Total','Payment','Status'],[...S.sales].reverse().map(x=>[x.id,dt(x.ts),x.customer,x.channel,P(x.p).name,x.q,R(x.total),pill(x.paid,x.paid=='Paid'?'':'low'),x.status]))}</div>`},
+products(){return `<h1>Products &amp; Recipes</h1><p class="sub">Cost is computed from each recipe (BOM) at current ingredient prices + ₹40 direct cost. Batch costs are snapshotted and never rewritten.</p><div class="card">${tbl(['SKU','Product','Price','Seller price','Ingredient+pack','Direct','COGS','Profit','Margin','Stock'],S.prod.map(p=>{const c=unitCost(p.id);return[p.sku,p.name,R(p.price),R(p.sp),R(bomCost(p.id)),R(p.direct),R(c),R(p.price-c),((p.price-c)/p.price*100).toFixed(0)+'%',stock(p.id)]}))}</div>
+ <h3>Recipes</h3>${S.prod.map(p=>`<details class="card" style="margin-bottom:8px"><summary><b>${p.name}</b></summary>${tbl(['Item','Qty / unit','Cost / unit'],S.rec[p.id].map(r=>[M(r.m).name,r.q+' '+M(r.m).unit,'₹'+(r.q*M(r.m).cost).toFixed(2)]))}</details>`).join('')}`},
+kitchen(){return `<h1>What's Cooking?</h1><p class="sub">Plan a run: required vs available. Producing consumes raw stock and creates a batch.</p><div class="card"><label>Product</label><select id="kp" onchange="kc()">${S.prod.map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}</select><label>Quantity</label><input id="kq" type="number" value="100" oninput="kc()"><div id="kn"></div><button class="btn" onclick="kgo()">Produce batch</button> <span id="ke" style="color:var(--bad)"></span></div>
+ <h3>Batches</h3><div class="card">${tbl(['Batch','Product','Planned','Accepted','Rejected','Yield','Cost','Cost/unit'],S.batches.map(b=>[b.id,P(b.pid).name,b.planned,b.ok,b.rej,(b.ok/b.planned*100).toFixed(0)+'%',R(b.cost),R(b.uc)]))}</div>`},
+pantry(){return `<h1>The Pantry</h1><p class="sub">Raw materials and packaging. Receiving a purchase raises stock and updates weighted-average cost.</p><div class="card">${tbl(['Item','Available','Reorder level','Latest cost','Value','Status'],S.mat.map(m=>[m.name,stock(m.id)+' '+m.unit,m.reorder,R(m.cost)+'/'+m.unit,R(stock(m.id)*m.cost),status(m)]))}</div><h3>Stock movements</h3><div class="card">${tbl(['When','Type','Item','Where','Qty','Ref'],[...S.led].reverse().slice(0,40).map(l=>[dt(l.ts),l.type,(l.kind=='raw'?M(l.item):P(l.item)).name,l.loc,+l.qty.toFixed(2),l.ref]))}</div>`},
+sellers(){return `<h1>Seller Points</h1><p class="sub">Stock sent, sold, commission and what each seller owes G&amp;K.</p><div class="card">${tbl(['Seller','Location','Commission','Sent','Sold','Stock left','Revenue','Commission','Paid','Outstanding','Sell-through'],S.sellers.map(s=>{const sent=S.led.filter(l=>l.loc==s.id&&l.type=='SELLER TRANSFER').reduce((a,l)=>a+l.qty,0),sold=S.sales.filter(x=>x.seller==s.id).reduce((a,x)=>a+x.q,0),rev=S.sales.filter(x=>x.seller==s.id).reduce((a,x)=>a+x.total,0),cm=S.sales.filter(x=>x.seller==s.id).reduce((a,x)=>a+x.comm,0),pd=S.pay.filter(x=>x.seller==s.id).reduce((a,x)=>a+x.amt,0),o=owed(s.id);
+ return[s.name,s.loc,s.comm*100+'%',sent,sold,S.prod.reduce((a,p)=>a+stock(p.id,s.id),0),R(rev),R(cm),R(pd),o>0?pill(R(o),'low'):pill('Settled'),(sent?(sold/sent*100).toFixed(0):0)+'%']}))}</div>`},
+money(){const c=calc(),pay=S.pay;return `<h1>Finance Room</h1><p class="sub">Derived live from sales, expenses and wastage.</p><div class="grid">${kpi('Revenue',R(c.rev))}${kpi('COGS',R(c.cogs))}${kpi('Gross profit',R(c.gp))}${kpi('Seller commission',R(c.comm))}${kpi('Expenses',R(c.ex))}${kpi('Wastage loss',R(c.wl))}</div>
+ <h3>Profitability by product</h3><div class="card">${tbl(['Product','Revenue','COGS','Gross profit','Margin'],S.prod.map(p=>{const s=S.sales.filter(x=>x.p==p.id),r=s.reduce((a,x)=>a+x.total,0),g=s.reduce((a,x)=>a+x.cogs,0);return[p.name,R(r),R(g),R(r-g),r?((r-g)/r*100).toFixed(0)+'%':'—']}))}</div>
+ <h3>Expenses</h3><div class="card">${tbl(['Date','Category','Description','Amount'],[...S.exp].reverse().map(e=>[dt(e.ts),e.cat,e.desc,R(e.amt)]))}</div>
+ <h3>Seller payments received</h3><div class="card">${tbl(['Date','Seller','Amount'],[...pay].reverse().map(p=>[dt(p.ts),SL(p.seller).name,R(p.amt)]))}</div>
+ <h3>Wastage</h3><div class="card">${tbl(['Date','Item','Qty','Reason','Cost loss'],[...S.waste].reverse().map(w=>[dt(w.ts),(P(w.item)||M(w.item)).name,w.q,w.reason,R(w.loss)]))}</div>`},
+log(){return `<h1>Activity Log</h1><p class="sub">Audit trail of actions.</p><div class="card">${S.log.map(l=>`<p class="s">${dt(l.ts)} · ${l.t}</p>`).join('')||'<div class="empty">Empty.</div>'}</div><p><button class="btn g" onclick="if(confirm('Reset all data to demo?')){seed();go()}">Reset demo data</button></p>`}};
+const NAV=[['house','🏠 House'],['orders','🧾 Orders'],['products','🍰 Products / BOM'],['kitchen','🏭 Kitchen'],['pantry','🥛 Pantry'],['sellers','🏪 Seller Points'],['money','💰 Finance'],['log','📜 Activity']];
+function go(v){if(v)view=v;$('#nav').innerHTML='<div class="logo">G&amp;K House</div><small>Everything behind the homemade.</small>'+NAV.map(n=>`<a class="${n[0]==view?'on':''}" onclick="go('${n[0]}')">${n[1]}</a>`).join('');
+ $('#bn').innerHTML=[['house','🏠 House'],['orders','🧾 Orders'],['kitchen','🏭 Kitchen'],['pantry','📦 Stock'],['money','💰 More']].map(n=>`<a class="${n[0]==view?'on':''}" onclick="go('${n[0]}')">${n[1]}</a>`).join('');
+ $('#main').innerHTML=V[view]();if(view=='kitchen')kc();scrollTo(0,0);save()}
+function flt(q){q=q.toLowerCase();document.querySelectorAll('table.t tr:not(:first-child)').forEach(r=>r.style.display=r.textContent.toLowerCase().includes(q)?'':'none')}
+function kc(){const p=$('#kp').value,q=+$('#kq').value||0;$('#kn').innerHTML=tbl(['Ingredient','Required','Available','Shortage'],need(p,q).map(x=>[x.m.name,+x.req.toFixed(2),x.av,x.av<x.req?pill((x.req-x.av).toFixed(2)+' short','bad'):pill('OK')]))}
+function kgo(){const e=prodRun($('#kp').value,+$('#kq').value,0);if(e)$('#ke').textContent=e;else go()}
+const opts=a=>a.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join(''),po=opts(S?[]:[]);
+const F={
+ 'Add sale':{f:()=>[['customer','Customer','text'],['channel','Channel','sel',['Direct','WhatsApp','Instagram','Website','Event','Corporate','Swiggy','Zomato']],['p','Product','sel',S.prod.map(p=>[p.id,p.name+' ('+stock(p.id)+' in stock)'])],['q','Qty','number'],['paid','Payment','sel',['Paid','Due']]],run:f=>doSale(f)},
+ 'Add production':{f:()=>[['p','Product','sel',S.prod.map(p=>[p.id,p.name])],['q','Quantity','number'],['r','Rejected (QC)','number']],run:f=>prodRun(f.p,+f.q,+f.r||0)},
+ 'Add purchase':{f:()=>[['m','Material','sel',S.mat.map(m=>[m.id,m.name+' ('+m.unit+')'])],['q','Quantity received','number'],['rate','Rate per unit ₹','number']],run:f=>{const m=M(f.m),q=+f.q,r=+f.rate;if(!(q>0&&r>0))return 'Enter qty and rate';const h=Math.max(0,stock(m.id));m.cost=(h*m.cost+q*r)/(h+q);L('PURCHASE',m.id,'raw','kitchen',q,r,'PO');A('Received '+q+' '+m.unit+' '+m.name+' @ '+R(r))}},
+ 'Add seller delivery':{f:()=>[['s','Seller','sel',S.sellers.map(s=>[s.id,s.name])],['p','Product','sel',S.prod.map(p=>[p.id,p.name+' ('+stock(p.id)+')'])],['q','Qty','number']],run:f=>sellRun('delivery',f.s,f.p,f.q)},
+ 'Add seller sale':{f:()=>[['s','Seller','sel',S.sellers.map(s=>[s.id,s.name])],['p','Product','sel',S.prod.map(p=>[p.id,p.name])],['q','Qty sold','number']],run:f=>sellRun('sale',f.s,f.p,f.q)},
+ 'Add payment':{f:()=>[['s','Seller','sel',S.sellers.map(s=>[s.id,s.name+' (owes '+R(Math.max(0,owed(s.id)))+')'])],['a','Amount ₹','number']],run:f=>{if(!(+f.a>0))return 'Enter amount';S.pay.push({id:uid(),ts:Date.now(),seller:f.s,amt:+f.a});A('Payment '+R(+f.a)+' from '+SL(f.s).name)}},
+ 'Add expense':{f:()=>[['c','Category','sel',['Raw Materials','Packaging','Salary','Rent','Electricity','Gas','Delivery','Marketing','Software','Equipment','Miscellaneous']],['d','Description','text'],['a','Amount ₹','number']],run:f=>{if(!(+f.a>0))return 'Enter amount';S.exp.push({id:uid(),ts:Date.now(),cat:f.c,desc:f.d,amt:+f.a});A('Expense '+R(+f.a)+' · '+f.c)}},
+ 'Add wastage':{f:()=>[['p','Product','sel',S.prod.map(p=>[p.id,p.name])],['q','Qty','number'],['r','Reason','sel',['Expired','Damaged','Production failure','Temperature','QC rejection','Seller return','Delivery damage','Overproduction','Other']]],run:f=>{const q=+f.q;if(!(q>0)||q>stock(f.p))return 'Only '+stock(f.p)+' in stock';const p=P(f.p);L('WASTAGE',f.p,'fg','kitchen',-q,p.fg,'waste');S.waste.push({id:uid(),ts:Date.now(),item:f.p,q,reason:f.r,loss:q*p.fg});A('Wasted '+q+' × '+p.name+' ('+f.r+')')}}};
+function menu(){$('#mb').innerHTML='<h3>Live update</h3><div class="chips">'+Object.keys(F).map(k=>`<button onclick="form('${k}')">${k.replace('Add ','+ ')}</button>`).join('')+'</div>';$('#modal').style.display='flex'}
+function form(k){const d=F[k];$('#mb').innerHTML=`<h3>${k}</h3>`+d.f().map(x=>`<label>${x[1]}</label>`+(x[2]=='sel'?`<select id="f_${x[0]}">${opts(x[3].map(o=>Array.isArray(o)?o:[o,o]))}</select>`:`<input id="f_${x[0]}" type="${x[2]}" step="any">`)).join('')+`<div id="fe" style="color:var(--bad);margin-bottom:8px"></div><button class="btn" id="fs">Save</button> <button class="btn g" onclick="closeM()">Cancel</button>`;
+ $('#fs').onclick=function(){if(this.dis)return;const f={};d.f().forEach(x=>f[x[0]]=$('#f_'+x[0]).value);const e=d.run(f);if(e)$('#fe').textContent=e;else{this.dis=1;closeM();go()}}}
+function closeM(){$('#modal').style.display='none'}
+addEventListener('keydown',e=>{if(e.key=='Escape')closeM()});
+load();go();
+</script></body></html>
